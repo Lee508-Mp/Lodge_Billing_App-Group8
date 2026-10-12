@@ -8,17 +8,17 @@ A JavaFX desktop application for a lodge reception desk. A receptionist logs in,
 **Group:** 8
 
 **Group members:** 
-|   _name_         |         _Student No_ |
-|____|____|   
-|GROLIA BHUTA    |            202512781 |
-|LUKAS MULUSA     |           202500008 |
-|BEATRICE MUYEMBE  |          202512782 |
-|MWANGALA LINDUNDA  |         202507923 |
-|LIBERTY BWALYA      |        202401399 |
-|HAGAI MUKWALA        |       202406300 |
-|BEATRICE NJEKWA       |      202502586 |
-|KASHWEKA CHUUMBA       |     202500032 |
-|CLEOPATRA KABASO        |    202501982 |
+|   _Name_         |         _Student No_ |
+|---|---|   
+| GROLIA BHUTA    |            202512781 |
+| LUKAS MULUSA     |           202500008 |
+| BEATRICE MUYEMBE  |          202512782 |
+| MWANGALA LINDUNDA  |         202507923 |
+| LIBERTY BWALYA      |        202401399 |
+| HAGAI MUKWALA        |       202406300 |
+| BEATRICE NJEKWA       |      202502586 |
+| KASHWEKA CHUUMBA       |     202500032 |
+| CLEOPATRA KABASO        |    202501982 |
 ---
 
 ## Features
