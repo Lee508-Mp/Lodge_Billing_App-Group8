@@ -1,0 +1,37 @@
+/* Sky-blue theme for the Lodge Billing Lab.
+ *
+ * JavaFX's default look (Modena) works out almost every colour from a few
+ * base variables, so changing them here re-themes buttons, menus, the
+ * toolbar, table headers and so on. To try another colour, just change
+ * the hex codes below. */
+
+.root {
+    -fx-base: #bfe4f8;                      /* buttons, menus, toolbar, headers */
+    -fx-background: #e3f4fd;                /* window background */
+    -fx-control-inner-background: #f5fbff;  /* text fields, table rows */
+    -fx-accent: #0ea5e9;                    /* selected row, Save bill button */
+    -fx-focus-color: #0284c7;               /* outline on the focused control */
+    -fx-faint-focus-color: #0284c722;
+}
+
+/* Extra touches (these classes are added in LodgeBillingApp.java) */
+.title-label {
+    -fx-text-fill: #075985;
+}
+
+.status-label {
+    -fx-text-fill: #0369a1;
+}
+
+/* Login page (classes are added in LoginView.java) */
+.login-box {
+    -fx-background-color: -fx-control-inner-background;
+    -fx-background-radius: 12;
+    -fx-border-color: #7dd3fc;
+    -fx-border-radius: 12;
+}
+
+.error-label {
+    -fx-text-fill: #b91c1c;
+    -fx-font-weight: bold;
+}
