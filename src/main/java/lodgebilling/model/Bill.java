@@ -28,9 +28,18 @@ public class Bill {
     private final double extras;
     private final double amountPaid;
     private final String notes;
+    private final String servedBy;   // the user who entered this bill
 
+    // Old 7-argument constructor kept, so nothing else has to change.
+    // A bill made this way has no 'served by' yet.
     public Bill(String billId, String guestName, RoomType roomType,
                 int nights, double extras, double amountPaid, String notes) {
+        this(billId, guestName, roomType, nights, extras, amountPaid, notes, "");
+    }
+
+    public Bill(String billId, String guestName, RoomType roomType,
+                int nights, double extras, double amountPaid, String notes,
+                String servedBy) {
         this.billId = billId;
         this.guestName = guestName;
         this.roomType = roomType;
@@ -38,6 +47,7 @@ public class Bill {
         this.extras = extras;
         this.amountPaid = amountPaid;
         this.notes = notes;
+        this.servedBy = servedBy == null ? "" : servedBy;
     }
 
     /**
@@ -46,7 +56,12 @@ public class Bill {
      * to turn a draft into a saved bill.
      */
     public Bill withBillId(String newId) {
-        return new Bill(newId, guestName, roomType, nights, extras, amountPaid, notes);
+        return new Bill(newId, guestName, roomType, nights, extras, amountPaid, notes, servedBy);
+    }
+
+    /** Same idea: returns a NEW Bill that records who entered it. */
+    public Bill withServedBy(String user) {
+        return new Bill(billId, guestName, roomType, nights, extras, amountPaid, notes, user);
     }
 
     // ---------- getters (PropertyValueFactory reads these by name) ----------
@@ -58,6 +73,7 @@ public class Bill {
     public double getExtras() { return extras; }
     public double getAmountPaid() { return amountPaid; }
     public String getNotes() { return notes; }
+    public String getServedBy() { return servedBy; }
 
     // ---------- calculated values ----------
 
@@ -122,6 +138,9 @@ public class Bill {
         }
         if (!notes.isEmpty()) {
             text += "\nNotes: " + notes;
+        }
+        if (!servedBy.isEmpty()) {
+            text += "\nServed by: " + servedBy;
         }
         return text;
     }

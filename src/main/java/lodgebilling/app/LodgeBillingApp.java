@@ -42,7 +42,7 @@ public class LodgeBillingApp extends Application {
         new LoginController(view, authService,            // 2. attach the controller
                 username -> showMainScreen(stage, username));
 
-        Scene scene = new Scene(root, 420, 470);
+        Scene scene = new Scene(root, 760, 470);
         Theme.apply(scene);
 
         Branding.applyIcon(stage);      // logo in the title bar / taskbar
@@ -59,11 +59,11 @@ public class LodgeBillingApp extends Application {
     private void showMainScreen(Stage stage, String username) {
         BillingView view = new BillingView(username);
         Parent root = view.build();                       // 1. build the screen
-        new BillingController(view, billService, validator,   // 2. attach the controller
+        new BillingController(view, billService, validator, username,   // 2. attach the controller
                 () -> showLogin(stage),                   // File > Log out
                 stage::close);                            // File > Close
 
-        Scene scene = new Scene(root, 960, 680);
+        Scene scene = new Scene(root, 1180, 720);
         Theme.apply(scene);
 
         stage.setTitle("Lodge Billing App");

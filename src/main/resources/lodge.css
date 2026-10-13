@@ -1,37 +1,117 @@
-/* Sky-blue theme for the Lodge Billing Lab.
+/* Dark theme for the Lodge Billing App.
  *
  * JavaFX's default look (Modena) works out almost every colour from a few
- * base variables, so changing them here re-themes buttons, menus, the
- * toolbar, table headers and so on. To try another colour, just change
- * the hex codes below. */
+ * base variables. When -fx-base is DARK, Modena automatically turns the text
+ * light, so changing these hex codes re-themes buttons, menus, the toolbar,
+ * table headers and so on.
+ *
+ * Palette:  slate backgrounds (#0f172a, #1e293b, #172033)
+ *           sky-blue accent   (#0ea5e9, #38bdf8)
+ * To try another accent, change -fx-accent and -fx-focus-color only. */
 
 .root {
-    -fx-base: #bfe4f8;                      /* buttons, menus, toolbar, headers */
-    -fx-background: #e3f4fd;                /* window background */
-    -fx-control-inner-background: #f5fbff;  /* text fields, table rows */
-    -fx-accent: #0ea5e9;                    /* selected row, Save bill button */
-    -fx-focus-color: #0284c7;               /* outline on the focused control */
-    -fx-faint-focus-color: #0284c722;
+    -fx-base: #1e293b;                        /* buttons, menus, toolbar, headers */
+    -fx-background: #0f172a;                  /* window background */
+    -fx-control-inner-background: #172033;    /* text fields, table rows */
+    -fx-control-inner-background-alt: #1b2740;/* every second table row */
+    -fx-accent: #0ea5e9;                      /* selected row, Save bill button */
+    -fx-focus-color: #38bdf8;                 /* outline on the focused control */
+    -fx-faint-focus-color: #38bdf833;
+    -fx-text-base-color: #e2e8f0;
 }
 
-/* Extra touches (these classes are added in LodgeBillingApp.java) */
+/* Readability fixes for the dark theme */
+.text-input {
+    -fx-text-fill: #e2e8f0;
+    -fx-prompt-text-fill: #7b8ba6;            /* the grey hint text inside empty fields */
+}
+
+.combo-box-base {
+    -fx-prompt-text-fill: #7b8ba6;
+}
+
+.button:default {                              /* Save bill and Log in */
+    -fx-base: #0284c7;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+}
+
+.button:default:hover {
+    -fx-base: #0ea5e9;
+}
+
+/* Extra touches (classes are added in the view classes) */
 .title-label {
-    -fx-text-fill: #075985;
+    -fx-text-fill: #e0f2fe;
 }
 
 .status-label {
-    -fx-text-fill: #0369a1;
+    -fx-text-fill: #7dd3fc;
 }
 
-/* Login page (classes are added in LoginView.java) */
+/* Login page */
 .login-box {
-    -fx-background-color: -fx-control-inner-background;
-    -fx-background-radius: 12;
-    -fx-border-color: #7dd3fc;
-    -fx-border-radius: 12;
+    -fx-background-color: #162033;
+    -fx-background-radius: 14;
+    -fx-border-color: #334155;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.55), 18, 0.2, 0, 6);
 }
 
 .error-label {
-    -fx-text-fill: #b91c1c;
+    -fx-text-fill: #f87171;
     -fx-font-weight: bold;
+}
+
+/* Login picture panel (left side of the login screen) */
+.hero-pane {
+    -fx-background-color: linear-gradient(to bottom, #0b1330, #1e3a5f);
+}
+
+.hero-caption-box {
+    -fx-background-color: linear-gradient(to top, rgba(8,12,24,0.92), rgba(8,12,24,0));
+}
+
+.hero-title {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 19px;
+    -fx-font-weight: bold;
+}
+
+.hero-sub {
+    -fx-text-fill: #cbd5e1;
+    -fx-font-size: 11px;
+}
+
+/* Room preview card on the billing screen */
+.room-card {
+    -fx-background-color: #162033;
+    -fx-background-radius: 12;
+    -fx-border-color: #334155;
+    -fx-border-radius: 12;
+}
+
+.room-image-box {
+    -fx-background-color: #0b1220;
+    -fx-background-radius: 8;
+}
+
+.room-title {
+    -fx-text-fill: #e0f2fe;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+.room-rate {
+    -fx-text-fill: #7dd3fc;
+    -fx-font-weight: bold;
+}
+
+.room-feature {
+    -fx-text-fill: #cbd5e1;
+}
+
+.room-placeholder {
+    -fx-text-fill: #94a3b8;
+    -fx-text-alignment: center;
 }

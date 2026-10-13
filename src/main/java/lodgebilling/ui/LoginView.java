@@ -2,15 +2,20 @@ package lodgebilling.ui;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
@@ -76,9 +81,54 @@ public class LoginView {
         card.setPadding(new Insets(24));
         card.getStyleClass().add("login-box");
 
-        StackPane root = new StackPane(card);         // centres the card
-        root.setPadding(new Insets(20));
-        return root;
+        StackPane cardPane = new StackPane(card);     // centres the card in the right half
+        cardPane.setPadding(new Insets(20));
+        HBox.setHgrow(cardPane, Priority.ALWAYS);
+
+        // Picture on the left, login card on the right.
+        return new HBox(buildHero(), cardPane);
+    }
+
+    /**
+     * The picture panel on the left (src/main/resources/login-hero.png).
+     * The picture is cropped to fit, and a dark strip at the bottom keeps the
+     * caption readable. If the picture is missing, a plain gradient
+     * (see .hero-pane in lodge.css) is shown instead.
+     */
+    private Node buildHero() {
+        StackPane hero = new StackPane();
+        hero.getStyleClass().add("hero-pane");
+        hero.setMinWidth(340);
+        hero.setPrefWidth(340);
+        hero.setMaxWidth(340);
+
+        Image image = Pictures.loginHero();
+        if (image != null) {
+            ImageView picture = new ImageView(image);
+            picture.setPreserveRatio(true);
+            picture.setFitHeight(470);                // same height as the login window
+            picture.setSmooth(true);
+            hero.getChildren().add(picture);
+        }
+
+        Label headline = new Label("Comfortable rooms.\nSimple billing.");
+        headline.getStyleClass().add("hero-title");
+        Label sub = new Label("ICT261  |  Group 8  |  Mulungushi University");
+        sub.getStyleClass().add("hero-sub");
+
+        VBox caption = new VBox(4, headline, sub);
+        caption.setPadding(new Insets(44, 18, 18, 18));
+        caption.setMaxHeight(Region.USE_PREF_SIZE);
+        caption.getStyleClass().add("hero-caption-box");
+        StackPane.setAlignment(caption, Pos.BOTTOM_LEFT);
+        hero.getChildren().add(caption);
+
+        // Crop anything that sticks out (e.g. a wide photo you add yourself).
+        Rectangle clip = new Rectangle();
+        clip.widthProperty().bind(hero.widthProperty());
+        clip.heightProperty().bind(hero.heightProperty());
+        hero.setClip(clip);
+        return hero;
     }
 
     // ---------- what the controller may ask the view to do ----------

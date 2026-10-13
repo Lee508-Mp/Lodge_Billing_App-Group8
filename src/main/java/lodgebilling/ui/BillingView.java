@@ -20,12 +20,15 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToolBar;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -57,6 +60,13 @@ public class BillingView {
     private TextArea notesArea;
     private Label status;
     private TableView<Bill> table;
+
+    // room preview card (photo + qualities of the chosen room type)
+    private ImageView roomImage;
+    private Label roomPlaceholder;
+    private Label roomTitle;
+    private Label roomRate;
+    private VBox roomFeatures;
 
     // things the user can click (the controller attaches the actions)
     private Button calculateButton;
@@ -123,10 +133,11 @@ public class BillingView {
                 new Label("Group 8"),
                 new Label("Mulungushi University"));
 
-        // Form on the left, price list on the right.
+        // Form on the left, price list in the middle, room preview on the right.
         GridPane form = buildForm();
         VBox prices = buildPricePanel();
-        HBox top = new HBox(24, form, prices);
+        VBox roomCard = buildRoomCard();
+        HBox top = new HBox(24, form, prices, roomCard);
         HBox.setHgrow(form, Priority.ALWAYS);
 
         status = new Label();
@@ -170,12 +181,14 @@ public class BillingView {
         roomBox.getItems().addAll(RoomType.values());
         roomBox.setPromptText("Choose a room type");
         roomBox.setMaxWidth(Double.MAX_VALUE);
+        // Show the matching photo and qualities whenever the choice changes.
+        roomBox.valueProperty().addListener((obs, oldType, newType) -> showRoomPreview(newType));
 
         nightsField = new TextField();
         nightsField.setPromptText("e.g., 3");
 
         extrasField = new TextField();
-        extrasField.setPromptText("amount you wish to spend on other services e.g(on food, massage)");
+        extrasField.setPromptText("amount you wish to spend on other services e.g(200)");
 
         paidField = new TextField();
         paidField.setPromptText("0");
@@ -228,6 +241,71 @@ public class BillingView {
         panel.setPrefWidth(250);
         panel.setMinWidth(250);
         return panel;
+    }
+
+    /** Photo, price and qualities of the room chosen in the combo box. */
+    private VBox buildRoomCard() {
+        roomImage = new ImageView();
+        roomImage.setFitWidth(236);
+        roomImage.setFitHeight(133);
+        roomImage.setPreserveRatio(true);      // never stretch the photo
+        roomImage.setSmooth(true);
+
+        // Text shown instead of the photo (nothing chosen yet, or photo missing).
+        roomPlaceholder = new Label();
+        roomPlaceholder.setWrapText(true);
+        roomPlaceholder.setMaxWidth(200);
+        roomPlaceholder.getStyleClass().add("room-placeholder");
+
+        // Fixed size, so the card does not jump when the photo changes.
+        StackPane imageBox = new StackPane(roomImage, roomPlaceholder);
+        imageBox.setMinSize(236, 133);
+        imageBox.setPrefSize(236, 133);
+        imageBox.setMaxSize(236, 133);
+        imageBox.getStyleClass().add("room-image-box");
+
+        roomTitle = new Label();
+        roomTitle.getStyleClass().add("room-title");
+        roomRate = new Label();
+        roomRate.getStyleClass().add("room-rate");
+
+        roomFeatures = new VBox(3);
+        roomFeatures.setMinHeight(110);        // room for 5 lines
+
+        VBox card = new VBox(8, imageBox, roomTitle, roomRate, roomFeatures);
+        card.setPadding(new Insets(12));
+        card.setMinWidth(260);
+        card.setPrefWidth(260);
+        card.setMaxWidth(260);
+        card.getStyleClass().add("room-card");
+
+        showRoomPreview(null);                 // start with the "choose a room" message
+        return card;
+    }
+
+    /** Fills the room card for a room type (or resets it when type is null). */
+    private void showRoomPreview(RoomType type) {
+        roomFeatures.getChildren().clear();
+        if (type == null) {
+            roomImage.setImage(null);
+            roomPlaceholder.setText("Choose a room type to see its photo and qualities.");
+            roomTitle.setText("Room preview");
+            roomRate.setText("");
+            return;
+        }
+
+        Image photo = Pictures.room(type);     // null if the file is missing
+        roomImage.setImage(photo);
+        roomPlaceholder.setText(photo == null ? "No photo found for " + type.getLabel() : "");
+        roomTitle.setText(type.getLabel() + " room");
+        roomRate.setText(Money.format(type.getRatePerNight()) + " per night");
+
+        for (String feature : type.getFeatures()) {
+            Label line = new Label("\u2022 " + feature);      // bullet point
+            line.setWrapText(true);
+            line.getStyleClass().add("room-feature");
+            roomFeatures.getChildren().add(line);
+        }
     }
 
     private Label ruleLabel(String text) {
@@ -355,6 +433,7 @@ public class BillingView {
         receipt.setTitle("Receipt");
         receipt.setHeaderText("Receipt " + bill.getBillId());
         receipt.setContentText(bill.toReceiptText());
+        Theme.apply(receipt);                 // dark look for the pop-up too
         receipt.showAndWait();
     }
 
@@ -365,6 +444,7 @@ public class BillingView {
                 "Delete bill " + bill.getBillId() + " for " + bill.getGuestName() + "?",
                 delete, ButtonType.CANCEL);
         ask.setHeaderText("Confirm deletion");
+        Theme.apply(ask);
         return ask.showAndWait().orElse(ButtonType.CANCEL) == delete;
     }
 
@@ -374,6 +454,7 @@ public class BillingView {
         about.setHeaderText("Lodge Billing App");
         about.setContentText("This Lodge Billing app was made and designed by group 8 members.\n"
                 + "Saved bills last only until you close the app.");
+        Theme.apply(about);
         about.showAndWait();
     }
 }

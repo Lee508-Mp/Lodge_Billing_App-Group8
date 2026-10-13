@@ -15,7 +15,7 @@ import javafx.stage.Stage;
  *
  * If logo.png is missing, the app still runs: it just shows no logo.
  */
-public final class Branding {
+public final class  Branding {
 
     // The leading "/" means "start from the resources folder".
     private static final String LOGO_PATH = "/logo.png";

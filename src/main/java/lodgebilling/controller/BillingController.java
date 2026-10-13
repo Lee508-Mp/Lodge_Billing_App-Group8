@@ -20,12 +20,14 @@ public class BillingController {
     private final BillingView view;
     private final BillService service;
     private final BillValidator validator;
+    private final String currentUser;     // who is logged in
 
     public BillingController(BillingView view, BillService service, BillValidator validator,
-                             Runnable onLogout, Runnable onClose) {
+                             String currentUser, Runnable onLogout, Runnable onClose) {
         this.view = view;
         this.service = service;
         this.validator = validator;
+        this.currentUser = currentUser;
 
         // The table shows the same list the service updates.
         view.setBills(service.getBills());
@@ -83,7 +85,7 @@ public class BillingController {
         if (draft == null) {
             return;
         }
-        Bill saved = service.addBill(draft);
+        Bill saved = service.addBill(draft.withServedBy(currentUser));
         if (saved.getChange() > 0) {
             view.setStatus("Saved " + saved.getBillId()
                     + ". Fully paid. Change to give: " + Money.format(saved.getChange()));
