@@ -35,7 +35,7 @@ public class LoginView {
 
     /** Builds the screen. Call this once, then give the view to a controller. */
     public Parent build() {
-        Label title = new Label("Lodge Billing App");
+        Label title = new Label("Parkview Lodge");
         title.setFont(Font.font("System", FontWeight.BOLD, 22));
         title.getStyleClass().add("title-label");
 

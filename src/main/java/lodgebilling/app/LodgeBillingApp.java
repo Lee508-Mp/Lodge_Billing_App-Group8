@@ -46,7 +46,7 @@ public class LodgeBillingApp extends Application {
         Theme.apply(scene);
 
         Branding.applyIcon(stage);      // logo in the title bar / taskbar
-        stage.setTitle("Lodge Billing App - Log in");
+        stage.setTitle("Parkview Lodge - Log in");
         stage.setScene(scene);
         stage.sizeToScene();            // resize the window to fit this screen
         stage.centerOnScreen();
@@ -66,7 +66,7 @@ public class LodgeBillingApp extends Application {
         Scene scene = new Scene(root, 1180, 720);
         Theme.apply(scene);
 
-        stage.setTitle("Lodge Billing App");
+        stage.setTitle("Parkview Lodge");
         stage.setScene(scene);
         stage.sizeToScene();
         stage.centerOnScreen();

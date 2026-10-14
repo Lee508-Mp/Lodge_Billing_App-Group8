@@ -124,7 +124,7 @@ public class BillingView {
 
     /** Title, form + price panel, status line and the saved-bills table. */
     private VBox buildCenter() {
-        Label title = new Label("Lodge Billing App");
+        Label title = new Label("Parkview Lodge");
         title.setFont(Font.font("System", FontWeight.BOLD, 22));
         title.getStyleClass().add("title-label");     // styled in lodge.css
 
@@ -451,7 +451,7 @@ public class BillingView {
     public void showAbout() {
         Alert about = new Alert(Alert.AlertType.INFORMATION);
         about.setTitle("About");
-        about.setHeaderText("Lodge Billing App");
+        about.setHeaderText("Parkview Lodge");
         about.setContentText("This Lodge Billing app was made and designed by group 8 members.\n"
                 + "Saved bills last only until you close the app.");
         Theme.apply(about);
