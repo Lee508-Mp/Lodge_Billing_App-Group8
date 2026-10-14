@@ -19,6 +19,7 @@ A JavaFX desktop application for a lodge reception desk. A receptionist logs in,
 | BEATRICE NJEKWA       |      202502586 |
 | KASHWEKA CHUUMBA       |     202500032 |
 | CLEOPATRA KABASO        |    202501982 |
+| Natasha Alice Chipili    |   202506093 |
 ---
 
 ## Features
@@ -109,7 +110,7 @@ The project uses layered architecture with MVC (lecture slides 9 to 12). Each cl
 | Layer | Package | Classes |
 |---|---|---|
 | App | `lodgebilling.app` | `LodgeBillingApp` (starts the app and connects each view to its controller) |
-| View | `lodgebilling.ui` | `LoginView`, `BillingView`, `Branding`, `Theme` |
+| View | `lodgebilling.ui` | `LoginView`, `BillingView`, `Branding`, `Theme` , `Picture`|
 | Controller | `lodgebilling.controller` | `LoginController`, `BillingController` |
 | Service | `lodgebilling.service` | `BillService`, `BillValidator`, `AuthService`, `InvalidBillInputException` |
 | Model | `lodgebilling.model` | `Bill`, `RoomType`, `BillField` |
@@ -139,19 +140,21 @@ LodgeBillingApp3/
 |   |   |   |-- model/       Bill, BillField, RoomType
 |   |   |   |-- service/     AuthService, BillService, BillValidator,
 |   |   |   |                InvalidBillInputException
-|   |   |   |-- ui/          BillingView, LoginView, Branding, Theme
+|   |   |   |-- ui/          BillingView, LoginView, Branding, Theme, Picture
 |   |   |   `-- util/        Money
 |   |   `-- resources/       lodge.css, logo.png
+|   |       |--rooms         family.jpg, deluxe.jpg, standard.jpg
 |   `-- test/java/lodgebilling/
 |       |-- model/           BillTest, RoomTypeTest
 |       |-- service/         AuthServiceTest, BillServiceTest, BillValidatorTest
-|       `-- util/            MoneyTest
+|       |-- util/            MoneyTest
+|       `-- ui/              ResourceFileTest
 `-- README.md
 ```
 
 ## Tests
 
-There are 38 JUnit 5 tests in 6 classes. They cover the billing rules (discount boundaries, overpayment and change), validation, ID numbering, login rules and money formatting.
+There are 41 JUnit 6 tests in 7 classes. They cover the billing rules (discount boundaries, overpayment and change), validation, ID numbering, login rules and money formatting and testing of file.
 
 Run them with:
 
@@ -159,7 +162,7 @@ Run them with:
 .\gradlew test
 ```
 
-A successful run ends with `BUILD SUCCESSFUL`. In IntelliJ, right-click `src/test/java` and choose **Run Tests** to see **38 of 38 passed**.
+A successful run ends with `BUILD SUCCESSFUL`. In IntelliJ, right-click `src/test/java` and choose **Run Tests** to see **41 of 41 passed**.
 
 The views and controllers are not unit tested because they need the JavaFX toolkit. They were checked by running the app.
 
