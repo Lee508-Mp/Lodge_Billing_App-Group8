@@ -5,12 +5,14 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
+import javafx.scene.control.Separator;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -32,6 +34,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import lodgebilling.model.Bill;
 import lodgebilling.model.BillField;
 import lodgebilling.model.RoomType;
@@ -40,18 +44,13 @@ import lodgebilling.util.Money;
 import java.util.function.Function;
 
 /**
- * VIEW ONLY: how the billing screen LOOKS .
- *
- * The build...() methods create the controls. Everything else is a small
- * method the controller can call ("read the nights text", "show this status",
- * "ask the user to confirm"). No business rules and no AuthService/BillService
- * in here. To move a button or change a label, edit this file only.
+ * VIEW ONLY: how the billing screen LOOKS.
+ * The build methods create the controls. The controller attaches actions.
  */
 public class BillingView {
 
-    private final String currentUser;       // only shown in the toolbar
+    private final String currentUser;
 
-    // form
     private TextField guestField;
     private ComboBox<RoomType> roomBox;
     private TextField nightsField;
@@ -61,14 +60,12 @@ public class BillingView {
     private Label status;
     private TableView<Bill> table;
 
-    // room preview card (photo + qualities of the chosen room type)
     private ImageView roomImage;
     private Label roomPlaceholder;
     private Label roomTitle;
     private Label roomRate;
     private VBox roomFeatures;
 
-    // things the user can click (the controller attaches the actions)
     private Button calculateButton;
     private Button saveButton;
     private Button newGuestButton;
@@ -83,17 +80,12 @@ public class BillingView {
         this.currentUser = currentUser;
     }
 
-    /** Builds the whole screen. Call once, then give the view to a controller. */
     public Parent build() {
         BorderPane root = new BorderPane();
         root.setTop(new VBox(buildMenuBar(), buildToolBar()));
         root.setCenter(buildCenter());
         return root;
     }
-
-    // =====================================================================
-    //  BUILDING THE SCREEN
-    // =====================================================================
 
     private MenuBar buildMenuBar() {
         newGuestItem = new MenuItem("New guest");
@@ -114,7 +106,6 @@ public class BillingView {
         viewReceiptButton = new Button("View receipt");
         deleteButton = new Button("Delete selected bill");
 
-        // The spacer pushes the "Logged in as" label to the far right.
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         Label loggedInAs = new Label("Logged in as: " + currentUser);
@@ -122,18 +113,16 @@ public class BillingView {
         return new ToolBar(newGuestButton, viewReceiptButton, deleteButton, spacer, loggedInAs);
     }
 
-    /** Title, form + price panel, status line and the saved-bills table. */
     private VBox buildCenter() {
         Label title = new Label("Parkview Lodge");
         title.setFont(Font.font("System", FontWeight.BOLD, 22));
-        title.getStyleClass().add("title-label");     // styled in lodge.css
+        title.getStyleClass().add("title-label");
 
         HBox subtitle = new HBox(14,
                 new Label("Group Assignment"),
                 new Label("Group 8"),
                 new Label("Mulungushi University"));
 
-        // Form on the left, price list in the middle, room preview on the right.
         GridPane form = buildForm();
         VBox prices = buildPricePanel();
         VBox roomCard = buildRoomCard();
@@ -143,7 +132,7 @@ public class BillingView {
         status = new Label();
         status.setWrapText(true);
         status.setFont(Font.font("System", FontWeight.BOLD, 13));
-        status.getStyleClass().add("status-label");   // styled in lodge.css
+        status.getStyleClass().add("status-label");
 
         Label savedLabel = new Label("Saved bills");
         savedLabel.setFont(Font.font("System", FontWeight.BOLD, 15));
@@ -151,7 +140,6 @@ public class BillingView {
         table = buildTable();
         VBox.setVgrow(table, Priority.ALWAYS);
 
-        // Header: logo on the left, title + subtitle stacked on the right.
         VBox titleBox = new VBox(4, title, subtitle);
         HBox header = new HBox(14, Branding.createLogo(56), titleBox);
         header.setAlignment(Pos.CENTER_LEFT);
@@ -166,9 +154,8 @@ public class BillingView {
         grid.setHgap(16);
         grid.setVgap(10);
 
-        // Column 0 = labels (natural width), column 1 = controls (take the rest).
         ColumnConstraints labelColumn = new ColumnConstraints();
-        labelColumn.setMinWidth(Region.USE_PREF_SIZE);   // never shorten a label to "Amount paid ..."
+        labelColumn.setMinWidth(Region.USE_PREF_SIZE);
         ColumnConstraints fieldColumn = new ColumnConstraints();
         fieldColumn.setHgrow(Priority.ALWAYS);
         grid.getColumnConstraints().addAll(labelColumn, fieldColumn);
@@ -176,12 +163,10 @@ public class BillingView {
         guestField = new TextField();
         guestField.setPromptText("e.g., Lucas Mulusa");
 
-        // ComboBox<RoomType>: shows each type's toString() ("Deluxe").
         roomBox = new ComboBox<>();
         roomBox.getItems().addAll(RoomType.values());
         roomBox.setPromptText("Choose a room type");
         roomBox.setMaxWidth(Double.MAX_VALUE);
-        // Show the matching photo and qualities whenever the choice changes.
         roomBox.valueProperty().addListener((obs, oldType, newType) -> showRoomPreview(newType));
 
         nightsField = new TextField();
@@ -207,13 +192,11 @@ public class BillingView {
 
         calculateButton = new Button("Calculate");
         saveButton = new Button("Save bill");
-        saveButton.setDefaultButton(true);          // Enter activates Save
-
+        saveButton.setDefaultButton(true);
         grid.add(new HBox(10, calculateButton, saveButton), 1, 6);
         return grid;
     }
 
-    /** Adds "label | control" as one row and links them for accessibility. */
     private void addFormRow(GridPane grid, int row, String labelText, Control control) {
         Label label = new Label(labelText);
         label.setLabelFor(control);
@@ -221,7 +204,6 @@ public class BillingView {
         grid.add(control, 1, row);
     }
 
-    /** Right-hand panel: prices come from the RoomType enum, rules from Bill. */
     private VBox buildPricePanel() {
         Label heading = new Label("Practice room prices");
         heading.setFont(Font.font("System", FontWeight.BOLD, 15));
@@ -243,21 +225,18 @@ public class BillingView {
         return panel;
     }
 
-    /** Photo, price and qualities of the room chosen in the combo box. */
     private VBox buildRoomCard() {
         roomImage = new ImageView();
         roomImage.setFitWidth(236);
         roomImage.setFitHeight(133);
-        roomImage.setPreserveRatio(true);      // never stretch the photo
+        roomImage.setPreserveRatio(true);
         roomImage.setSmooth(true);
 
-        // Text shown instead of the photo (nothing chosen yet, or photo missing).
         roomPlaceholder = new Label();
         roomPlaceholder.setWrapText(true);
         roomPlaceholder.setMaxWidth(200);
         roomPlaceholder.getStyleClass().add("room-placeholder");
 
-        // Fixed size, so the card does not jump when the photo changes.
         StackPane imageBox = new StackPane(roomImage, roomPlaceholder);
         imageBox.setMinSize(236, 133);
         imageBox.setPrefSize(236, 133);
@@ -270,7 +249,7 @@ public class BillingView {
         roomRate.getStyleClass().add("room-rate");
 
         roomFeatures = new VBox(3);
-        roomFeatures.setMinHeight(110);        // room for 5 lines
+        roomFeatures.setMinHeight(110);
 
         VBox card = new VBox(8, imageBox, roomTitle, roomRate, roomFeatures);
         card.setPadding(new Insets(12));
@@ -279,11 +258,10 @@ public class BillingView {
         card.setMaxWidth(260);
         card.getStyleClass().add("room-card");
 
-        showRoomPreview(null);                 // start with the "choose a room" message
+        showRoomPreview(null);
         return card;
     }
 
-    /** Fills the room card for a room type (or resets it when type is null). */
     private void showRoomPreview(RoomType type) {
         roomFeatures.getChildren().clear();
         if (type == null) {
@@ -294,14 +272,14 @@ public class BillingView {
             return;
         }
 
-        Image photo = Pictures.room(type);     // null if the file is missing
+        Image photo = Pictures.room(type);
         roomImage.setImage(photo);
         roomPlaceholder.setText(photo == null ? "No photo found for " + type.getLabel() : "");
         roomTitle.setText(type.getLabel() + " room");
         roomRate.setText(Money.format(type.getRatePerNight()) + " per night");
 
         for (String feature : type.getFeatures()) {
-            Label line = new Label("\u2022 " + feature);      // bullet point
+            Label line = new Label("\u2022 " + feature);
             line.setWrapText(true);
             line.getStyleClass().add("room-feature");
             roomFeatures.getChildren().add(line);
@@ -318,7 +296,6 @@ public class BillingView {
         TableView<Bill> t = new TableView<>();
         t.setPlaceholder(new Label("No saved bills yet."));
 
-        // Plain getters: PropertyValueFactory finds getBillId(), getGuestName()...
         TableColumn<Bill, String> idCol = new TableColumn<>("Bill");
         idCol.setCellValueFactory(new PropertyValueFactory<>("billId"));
         idCol.setPrefWidth(80);
@@ -346,7 +323,6 @@ public class BillingView {
         return t;
     }
 
-    /** A column that shows a double from the Bill as "K 123.45". */
     private TableColumn<Bill, String> moneyColumn(String title, Function<Bill, Double> getter) {
         TableColumn<Bill, String> column = new TableColumn<>(title);
         column.setCellValueFactory(cell ->
@@ -354,12 +330,6 @@ public class BillingView {
         column.setPrefWidth(110);
         return column;
     }
-
-    // =====================================================================
-    //  WHAT THE CONTROLLER MAY ASK THE VIEW TO DO
-    // =====================================================================
-
-    // ---------- attach actions (the controller decides WHAT happens) ----------
 
     public void onCalculate(Runnable action) { calculateButton.setOnAction(e -> action.run()); }
     public void onSave(Runnable action)      { saveButton.setOnAction(e -> action.run()); }
@@ -369,33 +339,26 @@ public class BillingView {
     public void onLogout(Runnable action)    { logoutItem.setOnAction(e -> action.run()); }
     public void onClose(Runnable action)     { closeItem.setOnAction(e -> action.run()); }
 
-    /** "New guest" exists twice (menu and toolbar), so both get the same action. */
     public void onNewGuest(Runnable action) {
         newGuestItem.setOnAction(e -> action.run());
         newGuestButton.setOnAction(e -> action.run());
     }
 
-    // ---------- read the form (raw text; the validator judges it) ----------
-
     public String getGuestName() { return guestField.getText(); }
-    public RoomType getRoomType() { return roomBox.getValue(); }   // null = nothing chosen
-    public String getNights()    { return nightsField.getText(); }
-    public String getExtras()    { return extrasField.getText(); }
+    public RoomType getRoomType() { return roomBox.getValue(); }
+    public String getNights() { return nightsField.getText(); }
+    public String getExtras() { return extrasField.getText(); }
     public String getAmountPaid() { return paidField.getText(); }
-    public String getNotes()     { return notesArea.getText(); }
-
-    // ---------- change what is shown ----------
+    public String getNotes() { return notesArea.getText(); }
 
     public void setStatus(String text) {
         status.setText(text);
     }
 
-    /** The same ObservableList the service updates, so the table refreshes itself. */
     public void setBills(ObservableList<Bill> bills) {
         table.setItems(bills);
     }
 
-    /** The selected row, or null if nothing is selected. */
     public Bill getSelectedBill() {
         return table.getSelectionModel().getSelectedItem();
     }
@@ -415,7 +378,6 @@ public class BillingView {
         guestField.requestFocus();
     }
 
-    /** Puts the cursor in the field the validator complained about. */
     public void focusField(BillField field) {
         switch (field) {
             case GUEST -> guestField.requestFocus();
@@ -426,18 +388,244 @@ public class BillingView {
         }
     }
 
-    // ---------- dialogs (presentation, so they live in the view) ----------
-
+    /**
+     * Compact professional receipt. Keeps all billing information but uses
+     * a smaller window, tighter spacing, and a scrollable page for long notes.
+     */
     public void showReceipt(Bill bill) {
-        Alert receipt = new Alert(Alert.AlertType.INFORMATION);
-        receipt.setTitle("Receipt");
-        receipt.setHeaderText("Receipt " + bill.getBillId());
-        receipt.setContentText(bill.toReceiptText());
-        Theme.apply(receipt);                 // dark look for the pop-up too
-        receipt.showAndWait();
+        Stage receiptStage = new Stage();
+        receiptStage.initModality(Modality.APPLICATION_MODAL);
+        receiptStage.setTitle("Parkview Lodge | Receipt " + bill.getBillId());
+
+        Label lodgeName = new Label("PARKVIEW LODGE");
+        lodgeName.setFont(Font.font("System", FontWeight.BOLD, 20));
+        lodgeName.setStyle("-fx-text-fill: #12345A;");
+
+        Label tagline = new Label("COMFORT  •  STAY  •  RELAX");
+        tagline.setFont(Font.font("System", 9));
+        tagline.setStyle("-fx-text-fill: #087E8B; -fx-letter-spacing: 1px;");
+
+        VBox brandText = new VBox(2, lodgeName, tagline);
+        brandText.setAlignment(Pos.CENTER_LEFT);
+
+        VBox receiptTitleBox = new VBox(3);
+        receiptTitleBox.setAlignment(Pos.CENTER_RIGHT);
+        Label receiptTitle = new Label("LODGE RECEIPT");
+        receiptTitle.setFont(Font.font("System", FontWeight.BOLD, 15));
+        receiptTitle.setStyle("-fx-text-fill: #12345A;");
+        Label receiptNumber = new Label("Receipt " + bill.getBillId());
+        receiptNumber.setFont(Font.font("System", FontWeight.BOLD, 11));
+        receiptNumber.setStyle("-fx-text-fill: #087E8B;");
+        receiptTitleBox.getChildren().addAll(receiptTitle, receiptNumber);
+
+        HBox receiptHeader = new HBox(10, Branding.createLogo(42), brandText, receiptTitleBox);
+        receiptHeader.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(brandText, Priority.ALWAYS);
+
+        Separator topRule = new Separator();
+        topRule.setStyle("-fx-background-color: #C8DDE8;");
+
+        VBox guestCard = receiptInfoCard("GUEST", bill.getGuestName());
+        VBox roomCard = receiptInfoCard(
+                "ROOM",
+                bill.getRoomType().getLabel() + "  •  "
+                        + Money.format(bill.getRoomType().getRatePerNight()) + " per night");
+        HBox guestRoom = new HBox(9, guestCard, roomCard);
+        HBox.setHgrow(guestCard, Priority.ALWAYS);
+        HBox.setHgrow(roomCard, Priority.ALWAYS);
+
+        HBox nightsRow = new HBox();
+        nightsRow.setAlignment(Pos.CENTER_LEFT);
+        Label nightsLabel = new Label("Nights of stay");
+        nightsLabel.setFont(Font.font("System", 12));
+        nightsLabel.setStyle("-fx-text-fill: #334155;");
+        Label nightsValue = new Label(String.valueOf(bill.getNights()));
+        nightsValue.setFont(Font.font("System", FontWeight.BOLD, 12));
+        nightsValue.setStyle("-fx-text-fill: #12345A;");
+        Region nightsSpacer = new Region();
+        HBox.setHgrow(nightsSpacer, Priority.ALWAYS);
+        nightsRow.getChildren().addAll(nightsLabel, nightsSpacer, nightsValue);
+
+        Label chargesHeading = new Label("CHARGES SUMMARY");
+        chargesHeading.setFont(Font.font("System", FontWeight.BOLD, 11));
+        chargesHeading.setStyle("-fx-text-fill: #12345A; -fx-letter-spacing: 0.7px;");
+
+        HBox chargeTableHeading = new HBox();
+        chargeTableHeading.setPadding(new Insets(7, 10, 7, 10));
+        chargeTableHeading.setStyle("-fx-background-color: #E7F2F5; -fx-background-radius: 6px;");
+        Label descriptionHeading = new Label("DESCRIPTION");
+        descriptionHeading.setFont(Font.font("System", FontWeight.BOLD, 9));
+        descriptionHeading.setStyle("-fx-text-fill: #315A70;");
+        Label amountHeading = new Label("AMOUNT");
+        amountHeading.setFont(Font.font("System", FontWeight.BOLD, 9));
+        amountHeading.setStyle("-fx-text-fill: #315A70;");
+        Region chargeSpacer = new Region();
+        HBox.setHgrow(chargeSpacer, Priority.ALWAYS);
+        chargeTableHeading.getChildren().addAll(descriptionHeading, chargeSpacer, amountHeading);
+
+        VBox chargeRows = new VBox(0,
+                receiptAmountRow("Room charge", Money.format(bill.getRoomCharge())),
+                new Separator(),
+                receiptAmountRow("Discount (" + (int) Bill.DISCOUNT_PERCENT + "%)",
+                        "-" + Money.format(bill.getDiscount())),
+                new Separator(),
+                receiptAmountRow("Extras and other services", Money.format(bill.getExtras())));
+        chargeRows.setPadding(new Insets(0, 3, 0, 3));
+
+        HBox totalRow = new HBox();
+        totalRow.setAlignment(Pos.CENTER_LEFT);
+        totalRow.setPadding(new Insets(10, 12, 10, 12));
+        totalRow.setStyle("-fx-background-color: #DDF2F0; -fx-background-radius: 7px;");
+        Label totalLabel = new Label("TOTAL");
+        totalLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
+        totalLabel.setStyle("-fx-text-fill: #12345A;");
+        Label totalValue = new Label(Money.format(bill.getTotal()));
+        totalValue.setFont(Font.font("System", FontWeight.BOLD, 19));
+        totalValue.setStyle("-fx-text-fill: #087E8B;");
+        Region totalSpacer = new Region();
+        HBox.setHgrow(totalSpacer, Priority.ALWAYS);
+        totalRow.getChildren().addAll(totalLabel, totalSpacer, totalValue);
+
+        HBox paymentSummary = new HBox(9,
+                receiptPaymentCard("AMOUNT PAID", Money.format(bill.getAmountPaid()), "#EAF2F8"),
+                receiptPaymentCard(
+                        bill.getBalance() > 0 ? "BALANCE DUE" : "BALANCE",
+                        Money.format(bill.getBalance()),
+                        bill.getBalance() > 0 ? "#FFF1E8" : "#EAF7F0"));
+        HBox.setHgrow(paymentSummary.getChildren().get(0), Priority.ALWAYS);
+        HBox.setHgrow(paymentSummary.getChildren().get(1), Priority.ALWAYS);
+
+        VBox extraDetails = new VBox(5);
+        if (bill.getChange() > 0) {
+            extraDetails.getChildren().add(
+                    receiptAmountRow("Change returned", Money.format(bill.getChange())));
+        }
+        if (bill.getNotes() != null && !bill.getNotes().isBlank()) {
+            Label notesHeading = new Label("NOTES");
+            notesHeading.setFont(Font.font("System", FontWeight.BOLD, 9));
+            notesHeading.setStyle("-fx-text-fill: #315A70;");
+            Label notesText = new Label(bill.getNotes());
+            notesText.setWrapText(true);
+            notesText.setStyle("-fx-text-fill: #334155; -fx-font-size: 10px;");
+            extraDetails.getChildren().add(new VBox(2, notesHeading, notesText));
+        }
+        if (bill.getServedBy() != null && !bill.getServedBy().isBlank()) {
+            Label servedBy = new Label("Served by: " + bill.getServedBy());
+            servedBy.setStyle("-fx-text-fill: #526579; -fx-font-size: 10px;");
+            extraDetails.getChildren().add(servedBy);
+        }
+
+        Separator bottomRule = new Separator();
+        bottomRule.setStyle("-fx-background-color: #C8DDE8;");
+        Label thankYou = new Label("Thank you for choosing Parkview Lodge.");
+        thankYou.setFont(Font.font("System", FontWeight.BOLD, 10));
+        thankYou.setStyle("-fx-text-fill: #087E8B;");
+
+        Button doneButton = new Button("Done");
+        doneButton.setDefaultButton(true);
+        doneButton.setCancelButton(true);
+        doneButton.setStyle(
+                "-fx-background-color: #087E8B; -fx-text-fill: white;"
+                + "-fx-font-weight: bold; -fx-font-size: 11px;"
+                + "-fx-background-radius: 6px; -fx-padding: 6px 18px;"
+                + "-fx-cursor: hand;");
+        doneButton.setOnAction(event -> receiptStage.close());
+
+        HBox footer = new HBox(10, thankYou, new Region(), doneButton);
+        footer.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(footer.getChildren().get(1), Priority.ALWAYS);
+
+        VBox receiptCard = new VBox(10,
+                receiptHeader,
+                topRule,
+                guestRoom,
+                nightsRow,
+                chargesHeading,
+                chargeTableHeading,
+                chargeRows,
+                totalRow,
+                paymentSummary,
+                extraDetails,
+                bottomRule,
+                footer);
+        receiptCard.setPadding(new Insets(16));
+        receiptCard.setMaxWidth(510);
+        receiptCard.setStyle(
+                "-fx-background-color: white; -fx-background-radius: 12px;"
+                + "-fx-border-color: #D8E5EC; -fx-border-radius: 12px;"
+                + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.14), 14, 0.15, 0, 4);");
+
+        javafx.scene.control.ScrollPane scrollPane =
+                new javafx.scene.control.ScrollPane(receiptCard);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(javafx.scene.control.ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setStyle("-fx-background: #F0F5F8; -fx-background-color: #F0F5F8;");
+
+        StackPane page = new StackPane(scrollPane);
+        page.setPadding(new Insets(12));
+        page.setStyle("-fx-background-color: #F0F5F8;");
+
+        Scene scene = new Scene(page, 560, 650);
+        receiptStage.setScene(scene);
+        receiptStage.setMinWidth(480);
+        receiptStage.setMinHeight(450);
+        receiptStage.setResizable(true);
+        receiptStage.showAndWait();
     }
 
-    /** Returns true only if the user pressed Delete. Cancel or closing = false. */
+    private VBox receiptInfoCard(String headingText, String valueText) {
+        Label heading = new Label(headingText);
+        heading.setFont(Font.font("System", FontWeight.BOLD, 9));
+        heading.setStyle("-fx-text-fill: #087E8B; -fx-letter-spacing: 0.7px;");
+
+        Label value = new Label(valueText == null ? "" : valueText);
+        value.setWrapText(true);
+        value.setFont(Font.font("System", FontWeight.BOLD, 11));
+        value.setStyle("-fx-text-fill: #12345A;");
+
+        VBox card = new VBox(4, heading, value);
+        card.setPadding(new Insets(9));
+        card.setStyle(
+                "-fx-background-color: #F2F7FA; -fx-background-radius: 7px;"
+                + "-fx-border-color: #E0EBF0; -fx-border-radius: 7px;");
+        return card;
+    }
+
+    private HBox receiptAmountRow(String description, String amount) {
+        Label descriptionLabel = new Label(description);
+        descriptionLabel.setWrapText(true);
+        descriptionLabel.setFont(Font.font("System", 11));
+        descriptionLabel.setStyle("-fx-text-fill: #334155;");
+
+        Label amountLabel = new Label(amount);
+        amountLabel.setFont(Font.font("System", FontWeight.BOLD, 11));
+        amountLabel.setStyle("-fx-text-fill: #12345A;");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        HBox row = new HBox(8, descriptionLabel, spacer, amountLabel);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setPadding(new Insets(7, 6, 7, 6));
+        return row;
+    }
+
+    private VBox receiptPaymentCard(String headingText, String amountText, String background) {
+        Label heading = new Label(headingText);
+        heading.setFont(Font.font("System", FontWeight.BOLD, 9));
+        heading.setStyle("-fx-text-fill: #526579; -fx-letter-spacing: 0.4px;");
+
+        Label amount = new Label(amountText);
+        amount.setFont(Font.font("System", FontWeight.BOLD, 14));
+        amount.setStyle("-fx-text-fill: #12345A;");
+
+        VBox card = new VBox(5, heading, amount);
+        card.setPadding(new Insets(10));
+        card.setMaxWidth(Double.MAX_VALUE);
+        card.setStyle("-fx-background-color: " + background + "; -fx-background-radius: 7px;");
+        return card;
+    }
+
     public boolean confirmDelete(Bill bill) {
         ButtonType delete = new ButtonType("Delete");
         Alert ask = new Alert(Alert.AlertType.CONFIRMATION,
