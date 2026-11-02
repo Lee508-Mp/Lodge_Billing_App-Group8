@@ -40,7 +40,6 @@ public class LodgeBillingApp extends Application {
         Parent root = view.build();                       // 1. build the screen
         new LoginController(view, authService,            // 2. attach the controller
                 username -> showMainScreen(stage, username));
-
         Scene scene = new Scene(root, 760, 470);
         Theme.apply(scene);
 
