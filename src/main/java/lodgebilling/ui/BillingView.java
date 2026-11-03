@@ -5,6 +5,7 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -14,6 +15,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.Separator;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
@@ -32,26 +34,22 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+
 import lodgebilling.model.Bill;
 import lodgebilling.model.BillField;
 import lodgebilling.model.RoomType;
 import lodgebilling.util.Money;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.function.Function;
 
-/**
- * VIEW ONLY: how the billing screen LOOKS .
- *
- * The build...() methods create the controls. Everything else is a small
- * method the controller can call ("read the nights text", "show this status",
- * "ask the user to confirm"). No business rules and no AuthService/BillService
- * in here. To move a button or change a label, edit this file only.
- */
 public class BillingView {
 
-    private final String currentUser;       // only shown in the toolbar
+    private final String currentUser;
 
-    // form
     private TextField guestField;
     private ComboBox<RoomType> roomBox;
     private TextField nightsField;
@@ -61,14 +59,12 @@ public class BillingView {
     private Label status;
     private TableView<Bill> table;
 
-    // room preview card (photo + qualities of the chosen room type)
     private ImageView roomImage;
     private Label roomPlaceholder;
     private Label roomTitle;
     private Label roomRate;
     private VBox roomFeatures;
 
-    // things the user can click (the controller attaches the actions)
     private Button calculateButton;
     private Button saveButton;
     private Button newGuestButton;
@@ -83,7 +79,6 @@ public class BillingView {
         this.currentUser = currentUser;
     }
 
-    /** Builds the whole screen. Call once, then give the view to a controller. */
     public Parent build() {
         BorderPane root = new BorderPane();
         root.setTop(new VBox(buildMenuBar(), buildToolBar()));
@@ -91,14 +86,11 @@ public class BillingView {
         return root;
     }
 
-    // =====================================================================
-    //  BUILDING THE SCREEN
-    // =====================================================================
-
     private MenuBar buildMenuBar() {
         newGuestItem = new MenuItem("New guest");
         logoutItem = new MenuItem("Log out");
         closeItem = new MenuItem("Close");
+
         Menu fileMenu = new Menu("File");
         fileMenu.getItems().addAll(newGuestItem, logoutItem, closeItem);
 
@@ -114,36 +106,43 @@ public class BillingView {
         viewReceiptButton = new Button("View receipt");
         deleteButton = new Button("Delete selected bill");
 
-        // The spacer pushes the "Logged in as" label to the far right.
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
+
         Label loggedInAs = new Label("Logged in as: " + currentUser);
 
-        return new ToolBar(newGuestButton, viewReceiptButton, deleteButton, spacer, loggedInAs);
+        return new ToolBar(
+                newGuestButton,
+                viewReceiptButton,
+                deleteButton,
+                spacer,
+                loggedInAs
+        );
     }
 
-    /** Title, form + price panel, status line and the saved-bills table. */
     private VBox buildCenter() {
         Label title = new Label("Parkview Lodge");
         title.setFont(Font.font("System", FontWeight.BOLD, 22));
-        title.getStyleClass().add("title-label");     // styled in lodge.css
+        title.getStyleClass().add("title-label");
 
-        HBox subtitle = new HBox(14,
+        HBox subtitle = new HBox(
+                14,
                 new Label("Group Assignment"),
                 new Label("Group 8"),
-                new Label("Mulungushi University"));
+                new Label("Mulungushi University")
+        );
 
-        // Form on the left, price list in the middle, room preview on the right.
         GridPane form = buildForm();
         VBox prices = buildPricePanel();
         VBox roomCard = buildRoomCard();
+
         HBox top = new HBox(24, form, prices, roomCard);
         HBox.setHgrow(form, Priority.ALWAYS);
 
         status = new Label();
         status.setWrapText(true);
         status.setFont(Font.font("System", FontWeight.BOLD, 13));
-        status.getStyleClass().add("status-label");   // styled in lodge.css
+        status.getStyleClass().add("status-label");
 
         Label savedLabel = new Label("Saved bills");
         savedLabel.setFont(Font.font("System", FontWeight.BOLD, 15));
@@ -151,12 +150,20 @@ public class BillingView {
         table = buildTable();
         VBox.setVgrow(table, Priority.ALWAYS);
 
-        // Header: logo on the left, title + subtitle stacked on the right.
         VBox titleBox = new VBox(4, title, subtitle);
+
         HBox header = new HBox(14, Branding.createLogo(56), titleBox);
         header.setAlignment(Pos.CENTER_LEFT);
 
-        VBox center = new VBox(10, header, top, status, savedLabel, table);
+        VBox center = new VBox(
+                10,
+                header,
+                top,
+                status,
+                savedLabel,
+                table
+        );
+
         center.setPadding(new Insets(14));
         return center;
     }
@@ -166,29 +173,33 @@ public class BillingView {
         grid.setHgap(16);
         grid.setVgap(10);
 
-        // Column 0 = labels (natural width), column 1 = controls (take the rest).
         ColumnConstraints labelColumn = new ColumnConstraints();
-        labelColumn.setMinWidth(Region.USE_PREF_SIZE);   // never shorten a label to "Amount paid ..."
+        labelColumn.setMinWidth(Region.USE_PREF_SIZE);
+
         ColumnConstraints fieldColumn = new ColumnConstraints();
         fieldColumn.setHgrow(Priority.ALWAYS);
+
         grid.getColumnConstraints().addAll(labelColumn, fieldColumn);
 
         guestField = new TextField();
         guestField.setPromptText("e.g., Lucas Mulusa");
 
-        // ComboBox<RoomType>: shows each type's toString() ("Deluxe").
         roomBox = new ComboBox<>();
         roomBox.getItems().addAll(RoomType.values());
         roomBox.setPromptText("Choose a room type");
         roomBox.setMaxWidth(Double.MAX_VALUE);
-        // Show the matching photo and qualities whenever the choice changes.
-        roomBox.valueProperty().addListener((obs, oldType, newType) -> showRoomPreview(newType));
+
+        roomBox.valueProperty().addListener(
+                (obs, oldType, newType) -> showRoomPreview(newType)
+        );
 
         nightsField = new TextField();
         nightsField.setPromptText("e.g., 3");
 
         extrasField = new TextField();
-        extrasField.setPromptText("amount you wish to spend on other services e.g(200)");
+        extrasField.setPromptText(
+                "amount you wish to spend on other services e.g(200)"
+        );
 
         paidField = new TextField();
         paidField.setPromptText("0");
@@ -207,57 +218,76 @@ public class BillingView {
 
         calculateButton = new Button("Calculate");
         saveButton = new Button("Save bill");
-        saveButton.setDefaultButton(true);          // Enter activates Save
+        saveButton.setDefaultButton(true);
 
         grid.add(new HBox(10, calculateButton, saveButton), 1, 6);
+
         return grid;
     }
 
-    /** Adds "label | control" as one row and links them for accessibility. */
-    private void addFormRow(GridPane grid, int row, String labelText, Control control) {
+    private void addFormRow(
+            GridPane grid,
+            int row,
+            String labelText,
+            Control control
+    ) {
         Label label = new Label(labelText);
         label.setLabelFor(control);
+
         grid.add(label, 0, row);
         grid.add(control, 1, row);
     }
 
-    /** Right-hand panel: prices come from the RoomType enum, rules from Bill. */
     private VBox buildPricePanel() {
         Label heading = new Label("Practice room prices");
         heading.setFont(Font.font("System", FontWeight.BOLD, 15));
 
         VBox panel = new VBox(8, heading);
+
         for (RoomType type : RoomType.values()) {
-            panel.getChildren().add(new Label(
-                    type.getLabel() + ": " + Money.format(type.getRatePerNight()) + " per night"));
+            panel.getChildren().add(
+                    new Label(
+                            type.getLabel() + ": "
+                                    + Money.format(type.getRatePerNight())
+                                    + " per night"
+                    )
+            );
         }
 
-        panel.getChildren().add(ruleLabel(
-                Bill.DISCOUNT_MIN_NIGHTS + " nights or more: "
-                        + (int) Bill.DISCOUNT_PERCENT + "% off the room charge."));
-        panel.getChildren().add(ruleLabel("Extras get no discount. No tax in this lab."));
-        panel.getChildren().add(ruleLabel("Saved bills last only until you close the app."));
+        panel.getChildren().add(
+                ruleLabel(
+                        Bill.DISCOUNT_MIN_NIGHTS + " nights or more: "
+                                + (int) Bill.DISCOUNT_PERCENT
+                                + "% off the room charge."
+                )
+        );
+
+        panel.getChildren().add(
+                ruleLabel("Extras get no discount. No tax in this lab.")
+        );
+
+        panel.getChildren().add(
+                ruleLabel("Saved bills last only until you close the app.")
+        );
 
         panel.setPrefWidth(250);
         panel.setMinWidth(250);
+
         return panel;
     }
 
-    /** Photo, price and qualities of the room chosen in the combo box. */
     private VBox buildRoomCard() {
         roomImage = new ImageView();
         roomImage.setFitWidth(236);
         roomImage.setFitHeight(133);
-        roomImage.setPreserveRatio(true);      // never stretch the photo
+        roomImage.setPreserveRatio(true);
         roomImage.setSmooth(true);
 
-        // Text shown instead of the photo (nothing chosen yet, or photo missing).
         roomPlaceholder = new Label();
         roomPlaceholder.setWrapText(true);
         roomPlaceholder.setMaxWidth(200);
         roomPlaceholder.getStyleClass().add("room-placeholder");
 
-        // Fixed size, so the card does not jump when the photo changes.
         StackPane imageBox = new StackPane(roomImage, roomPlaceholder);
         imageBox.setMinSize(236, 133);
         imageBox.setPrefSize(236, 133);
@@ -266,42 +296,60 @@ public class BillingView {
 
         roomTitle = new Label();
         roomTitle.getStyleClass().add("room-title");
+
         roomRate = new Label();
         roomRate.getStyleClass().add("room-rate");
 
         roomFeatures = new VBox(3);
-        roomFeatures.setMinHeight(110);        // room for 5 lines
+        roomFeatures.setMinHeight(110);
 
-        VBox card = new VBox(8, imageBox, roomTitle, roomRate, roomFeatures);
+        VBox card = new VBox(
+                8,
+                imageBox,
+                roomTitle,
+                roomRate,
+                roomFeatures
+        );
+
         card.setPadding(new Insets(12));
         card.setMinWidth(260);
         card.setPrefWidth(260);
         card.setMaxWidth(260);
         card.getStyleClass().add("room-card");
 
-        showRoomPreview(null);                 // start with the "choose a room" message
+        showRoomPreview(null);
         return card;
     }
 
-    /** Fills the room card for a room type (or resets it when type is null). */
     private void showRoomPreview(RoomType type) {
         roomFeatures.getChildren().clear();
+
         if (type == null) {
             roomImage.setImage(null);
-            roomPlaceholder.setText("Choose a room type to see its photo and qualities.");
+            roomPlaceholder.setText(
+                    "Choose a room type to see its photo and qualities."
+            );
             roomTitle.setText("Room preview");
             roomRate.setText("");
             return;
         }
 
-        Image photo = Pictures.room(type);     // null if the file is missing
+        Image photo = Pictures.room(type);
         roomImage.setImage(photo);
-        roomPlaceholder.setText(photo == null ? "No photo found for " + type.getLabel() : "");
+
+        roomPlaceholder.setText(
+                photo == null
+                        ? "No photo found for " + type.getLabel()
+                        : ""
+        );
+
         roomTitle.setText(type.getLabel() + " room");
-        roomRate.setText(Money.format(type.getRatePerNight()) + " per night");
+        roomRate.setText(
+                Money.format(type.getRatePerNight()) + " per night"
+        );
 
         for (String feature : type.getFeatures()) {
-            Label line = new Label("\u2022 " + feature);      // bullet point
+            Label line = new Label("\u2022 " + feature);
             line.setWrapText(true);
             line.getStyleClass().add("room-feature");
             roomFeatures.getChildren().add(line);
@@ -318,7 +366,6 @@ public class BillingView {
         TableView<Bill> t = new TableView<>();
         t.setPlaceholder(new Label("No saved bills yet."));
 
-        // Plain getters: PropertyValueFactory finds getBillId(), getGuestName()...
         TableColumn<Bill, String> idCol = new TableColumn<>("Bill");
         idCol.setCellValueFactory(new PropertyValueFactory<>("billId"));
         idCol.setPrefWidth(80);
@@ -343,59 +390,91 @@ public class BillingView {
         t.getColumns().add(moneyColumn("Paid", Bill::getAmountPaid));
         t.getColumns().add(moneyColumn("Balance", Bill::getBalance));
         t.getColumns().add(moneyColumn("Change", Bill::getChange));
+
         return t;
     }
 
-    /** A column that shows a double from the Bill as "K 123.45". */
-    private TableColumn<Bill, String> moneyColumn(String title, Function<Bill, Double> getter) {
+    private TableColumn<Bill, String> moneyColumn(
+            String title,
+            Function<Bill, Double> getter
+    ) {
         TableColumn<Bill, String> column = new TableColumn<>(title);
+
         column.setCellValueFactory(cell ->
-                new SimpleStringProperty(Money.format(getter.apply(cell.getValue()))));
+                new SimpleStringProperty(
+                        Money.format(getter.apply(cell.getValue()))
+                )
+        );
+
         column.setPrefWidth(110);
         return column;
     }
 
-    // =====================================================================
-    //  WHAT THE CONTROLLER MAY ASK THE VIEW TO DO
-    // =====================================================================
+    public void onCalculate(Runnable action) {
+        calculateButton.setOnAction(e -> action.run());
+    }
 
-    // ---------- attach actions (the controller decides WHAT happens) ----------
+    public void onSave(Runnable action) {
+        saveButton.setOnAction(e -> action.run());
+    }
 
-    public void onCalculate(Runnable action) { calculateButton.setOnAction(e -> action.run()); }
-    public void onSave(Runnable action)      { saveButton.setOnAction(e -> action.run()); }
-    public void onViewReceipt(Runnable a)    { viewReceiptButton.setOnAction(e -> a.run()); }
-    public void onDeleteBill(Runnable a)     { deleteButton.setOnAction(e -> a.run()); }
-    public void onAbout(Runnable action)     { aboutItem.setOnAction(e -> action.run()); }
-    public void onLogout(Runnable action)    { logoutItem.setOnAction(e -> action.run()); }
-    public void onClose(Runnable action)     { closeItem.setOnAction(e -> action.run()); }
+    public void onViewReceipt(Runnable action) {
+        viewReceiptButton.setOnAction(e -> action.run());
+    }
 
-    /** "New guest" exists twice (menu and toolbar), so both get the same action. */
+    public void onDeleteBill(Runnable action) {
+        deleteButton.setOnAction(e -> action.run());
+    }
+
+    public void onAbout(Runnable action) {
+        aboutItem.setOnAction(e -> action.run());
+    }
+
+    public void onLogout(Runnable action) {
+        logoutItem.setOnAction(e -> action.run());
+    }
+
+    public void onClose(Runnable action) {
+        closeItem.setOnAction(e -> action.run());
+    }
+
     public void onNewGuest(Runnable action) {
         newGuestItem.setOnAction(e -> action.run());
         newGuestButton.setOnAction(e -> action.run());
     }
 
-    // ---------- read the form (raw text; the validator judges it) ----------
+    public String getGuestName() {
+        return guestField.getText();
+    }
 
-    public String getGuestName() { return guestField.getText(); }
-    public RoomType getRoomType() { return roomBox.getValue(); }   // null = nothing chosen
-    public String getNights()    { return nightsField.getText(); }
-    public String getExtras()    { return extrasField.getText(); }
-    public String getAmountPaid() { return paidField.getText(); }
-    public String getNotes()     { return notesArea.getText(); }
+    public RoomType getRoomType() {
+        return roomBox.getValue();
+    }
 
-    // ---------- change what is shown ----------
+    public String getNights() {
+        return nightsField.getText();
+    }
+
+    public String getExtras() {
+        return extrasField.getText();
+    }
+
+    public String getAmountPaid() {
+        return paidField.getText();
+    }
+
+    public String getNotes() {
+        return notesArea.getText();
+    }
 
     public void setStatus(String text) {
         status.setText(text);
     }
 
-    /** The same ObservableList the service updates, so the table refreshes itself. */
     public void setBills(ObservableList<Bill> bills) {
         table.setItems(bills);
     }
 
-    /** The selected row, or null if nothing is selected. */
     public Bill getSelectedBill() {
         return table.getSelectionModel().getSelectedItem();
     }
@@ -415,7 +494,6 @@ public class BillingView {
         guestField.requestFocus();
     }
 
-    /** Puts the cursor in the field the validator complained about. */
     public void focusField(BillField field) {
         switch (field) {
             case GUEST -> guestField.requestFocus();
@@ -426,34 +504,226 @@ public class BillingView {
         }
     }
 
-    // ---------- dialogs (presentation, so they live in the view) ----------
-
     public void showReceipt(Bill bill) {
-        Alert receipt = new Alert(Alert.AlertType.INFORMATION);
-        receipt.setTitle("Receipt");
-        receipt.setHeaderText("Receipt " + bill.getBillId());
-        receipt.setContentText(bill.toReceiptText());
-        Theme.apply(receipt);                 // dark look for the pop-up too
-        receipt.showAndWait();
+
+        if (bill == null) {
+            return;
+        }
+
+        Stage receiptStage = new Stage();
+        receiptStage.initModality(Modality.APPLICATION_MODAL);
+        receiptStage.setTitle(
+                "Parkview Lodge | Receipt " + bill.getBillId()
+        );
+
+        String date = LocalDateTime.now().format(
+                DateTimeFormatter.ofPattern("dd MMM yyyy  |  HH:mm")
+        );
+
+        String paymentStatus;
+
+        if (bill.getBalance() > 0 && bill.getAmountPaid() > 0) {
+            paymentStatus = "PARTIALLY PAID";
+        } else if (bill.getBalance() > 0) {
+            paymentStatus = "UNPAID";
+        } else {
+            paymentStatus = "FULLY PAID";
+        }
+
+        String servedBy = bill.getServedBy() == null
+                || bill.getServedBy().isBlank()
+                ? "Not specified"
+                : bill.getServedBy();
+
+        String notes = bill.getNotes() == null
+                || bill.getNotes().isBlank()
+                ? "None"
+                : bill.getNotes();
+
+        String receiptText = """
+                
+                    ==============================================
+                              PARKVIEW LODGE
+                         COMFORT  •  STAY  •  RELAX
+                    ==============================================
+                
+                              GUEST RECEIPT
+                
+                    Receipt Number : %s
+                    Date           : %s
+                
+                    ----------------------------------------------
+                              GUEST INFORMATION
+                    ----------------------------------------------
+                
+                    Guest Name     : %s
+                    Room Type      : %s
+                    Nights Stayed  : %d
+                    Served By      : %s
+                
+                    ----------------------------------------------
+                              CHARGES SUMMARY
+                    ----------------------------------------------
+                
+                    Room Charge    : %s
+                    Discount       : -%s
+                    Extras         : %s
+                
+                    ----------------------------------------------
+                    TOTAL          : %s
+                    ----------------------------------------------
+                
+                    Amount Paid    : %s
+                    Balance Due    : %s
+                    Change         : %s
+                
+                    Payment Status : %s
+                
+                    ----------------------------------------------
+                              ADDITIONAL INFORMATION
+                    ----------------------------------------------
+                
+                    Notes:
+                    %s
+                
+                    ==============================================
+                
+                      THANK YOU FOR CHOOSING PARKVIEW LODGE!
+                
+                          WE HOPE TO SEE YOU AGAIN.
+                
+                    ==============================================
+                """.formatted(
+                bill.getBillId(),
+                date,
+                bill.getGuestName(),
+                bill.getRoomType().getLabel(),
+                bill.getNights(),
+                servedBy,
+                Money.format(bill.getRoomCharge()),
+                Money.format(bill.getDiscount()),
+                Money.format(bill.getExtras()),
+                Money.format(bill.getTotal()),
+                Money.format(bill.getAmountPaid()),
+                Money.format(bill.getBalance()),
+                Money.format(bill.getChange()),
+                paymentStatus,
+                notes
+        );
+
+        TextArea receiptArea = new TextArea(receiptText);
+        receiptArea.setEditable(false);
+        receiptArea.setWrapText(false);
+        receiptArea.setFont(Font.font("Monospaced", 11));
+        receiptArea.setMaxWidth(Double.MAX_VALUE);
+        receiptArea.setMaxHeight(Double.MAX_VALUE);
+
+        receiptArea.setStyle(
+                "-fx-control-inner-background: white;"
+                + "-fx-text-fill: #12345A;"
+                + "-fx-border-color: transparent;"
+                + "-fx-background-color: white;"
+                + "-fx-background-radius: 0;"
+        );
+
+        VBox receiptContent = new VBox(receiptArea);
+        receiptContent.setPadding(Insets.EMPTY);
+        receiptContent.setMaxSize(
+                Double.MAX_VALUE,
+                Double.MAX_VALUE
+        );
+
+        VBox.setVgrow(receiptArea, Priority.ALWAYS);
+
+        javafx.scene.control.ScrollPane scrollPane =
+                new javafx.scene.control.ScrollPane(receiptContent);
+
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        scrollPane.setHbarPolicy(
+                javafx.scene.control.ScrollPane.ScrollBarPolicy.AS_NEEDED
+        );
+        scrollPane.setVbarPolicy(
+                javafx.scene.control.ScrollPane.ScrollBarPolicy.AS_NEEDED
+        );
+
+        scrollPane.setStyle(
+                "-fx-background: white;"
+                + "-fx-background-color: white;"
+                + "-fx-border-color: transparent;"
+        );
+
+        Button doneButton = new Button("Done");
+        doneButton.setDefaultButton(true);
+        doneButton.setCancelButton(true);
+
+        doneButton.setStyle(
+                "-fx-background-color: #087E8B;"
+                + "-fx-text-fill: white;"
+                + "-fx-font-weight: bold;"
+                + "-fx-font-size: 12px;"
+                + "-fx-background-radius: 6px;"
+                + "-fx-padding: 8px 25px;"
+                + "-fx-cursor: hand;"
+        );
+
+        doneButton.setOnAction(event -> receiptStage.close());
+
+        HBox buttonBox = new HBox(doneButton);
+        buttonBox.setAlignment(Pos.CENTER);
+        buttonBox.setPadding(new Insets(10));
+
+        VBox page = new VBox(
+                scrollPane,
+                buttonBox
+        );
+
+        page.setSpacing(0);
+        page.setPadding(new Insets(0));
+        page.setStyle("-fx-background-color: white;");
+
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+
+        // REDUCED RECEIPT WIDTH
+        Scene scene = new Scene(page, 460, 650);
+
+        receiptStage.setScene(scene);
+        receiptStage.setMinWidth(420);
+        receiptStage.setMinHeight(450);
+        receiptStage.setResizable(true);
+
+        receiptStage.showAndWait();
     }
 
-    /** Returns true only if the user pressed Delete. Cancel or closing = false. */
     public boolean confirmDelete(Bill bill) {
         ButtonType delete = new ButtonType("Delete");
-        Alert ask = new Alert(Alert.AlertType.CONFIRMATION,
-                "Delete bill " + bill.getBillId() + " for " + bill.getGuestName() + "?",
-                delete, ButtonType.CANCEL);
+
+        Alert ask = new Alert(
+                Alert.AlertType.CONFIRMATION,
+                "Delete bill " + bill.getBillId()
+                        + " for " + bill.getGuestName() + "?",
+                delete,
+                ButtonType.CANCEL
+        );
+
         ask.setHeaderText("Confirm deletion");
         Theme.apply(ask);
+
         return ask.showAndWait().orElse(ButtonType.CANCEL) == delete;
     }
 
     public void showAbout() {
         Alert about = new Alert(Alert.AlertType.INFORMATION);
+
         about.setTitle("About");
         about.setHeaderText("Parkview Lodge");
-        about.setContentText("This Lodge Billing app was made and designed by group 8 members.\n"
-                + "Saved bills last only until you close the app.");
+
+        about.setContentText(
+                "This Lodge Billing app was made and designed "
+                        + "by group 8 members.\n"
+                        + "Saved bills last only until you close the app."
+        );
+
         Theme.apply(about);
         about.showAndWait();
     }
